@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Lab_1_Horbach_633p
 {
@@ -10,42 +6,54 @@ namespace Lab_1_Horbach_633p
     {
         public static int CalculateRank(double[,] matrix)
         {
-            int rows = matrix.GetLength(0);
-            int cols = matrix.GetLength(1);
-            double[,] temp = (double[,])matrix.Clone();
+            Jordan.protocol.Clear(); // очищаємо перед запуском
 
+            int n = matrix.GetLength(0);
+            int m = matrix.GetLength(1);
             int rank = 0;
+            int i = 0;
 
-            for (int r = 0, c = 0; r < rows && c < cols; c++)
+            string[] rowVars = new string[n];
+            string[] colVars = new string[m];
+            for (int idx = 0; idx < n; idx++) rowVars[idx] = $"x{idx + 1}";
+            for (int idx = 0; idx < m; idx++) colVars[idx] = $"y{idx + 1}";
+
+            double[,] currentMatrix = (double[,])matrix.Clone();
+
+            Jordan.protocol.AppendLine("Початкова матриця:");
+            AppendMatrix(currentMatrix);
+
+            while (i < n && i < m)
             {
-                int pivotRow = r;
-                for (int i = r + 1; i < rows; i++)
-                    if (Math.Abs(temp[i, c]) > Math.Abs(temp[pivotRow, c]))
-                        pivotRow = i;
+                Jordan.protocol.AppendLine($"Перевірка a[{i + 1},{i + 1}] = {currentMatrix[i, i]}");
 
-                if (Math.Abs(temp[pivotRow, c]) < 1e-10)
-                    continue;
-
-                for (int j = 0; j < cols; j++)
+                if (Math.Abs(currentMatrix[i, i]) > 1e-12)
                 {
-                    double t = temp[r, j];
-                    temp[r, j] = temp[pivotRow, j];
-                    temp[pivotRow, j] = t;
+                    currentMatrix = Jordan.JordanStep(currentMatrix, i, i, ref rowVars, ref colVars);
+                    rank++;
                 }
-
-                for (int i = 0; i < rows; i++)
-                {
-                    if (i == r) continue;
-                    double factor = temp[i, c] / temp[r, c];
-                    for (int j = c; j < cols; j++)
-                        temp[i, j] -= factor * temp[r, j];
-                }
-
-                r++;
-                rank++;
+                i++;
             }
 
+            Jordan.protocol.AppendLine($"Остаточний ранг матриці: {rank}");
             return rank;
         }
+
+        private static void AppendMatrix(double[,] matrix)
+        {
+            int n = matrix.GetLength(0);
+            int m = matrix.GetLength(1);
+            for (int i = 0; i < n; i++)
+            {
+                string row = "";
+                for (int j = 0; j < m; j++)
+                {
+                    row += matrix[i, j].ToString("F2") + "\t";
+                }
+                Jordan.protocol.AppendLine(row.TrimEnd());
+            }
+            Jordan.protocol.AppendLine();
+        }
+
     }
 }

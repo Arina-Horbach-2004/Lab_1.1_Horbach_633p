@@ -31,6 +31,7 @@ namespace Lab_1_Horbach_633p
             return result;
         }
 
+        //Метод виконує множення двох матриць
         public static double[,] Multiply(double[,] a, double[,] b)
         {
             int n = a.GetLength(0);
@@ -46,6 +47,8 @@ namespace Lab_1_Horbach_633p
             return result;
         }
 
+
+        // одиничну матрицю розміром
         public static double[,] IdentityMatrix(int size)
         {
             double[,] identity = new double[size, size];

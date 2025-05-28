@@ -10,7 +10,7 @@ namespace WinFormsApp1
             InitializeComponent();
         }
 
-
+        //Обернена матриця
         private void button_find_inverse_matrix_Click(object sender, EventArgs e)
         {
             try
@@ -39,7 +39,7 @@ namespace WinFormsApp1
                 {
                     string line = "";
                     for (int j = 0; j < n; j++)
-                        line += $"{inverse[i, j]:F4} ";
+                        line += $"{inverse[i, j]:F3} ";
                     textBox_matri_Inverted.AppendText(line.Trim() + Environment.NewLine);
                 }
             }
@@ -49,6 +49,23 @@ namespace WinFormsApp1
             }
         }
 
+        private void button_protokol_obernen_Click(object sender, EventArgs e)
+        {
+
+            try
+            {
+
+                string filePath = "C:\\Users\\Arina Gorbach\\Desktop\\inverse_matrix_protocol.txt";
+                Jordan.SaveProtocol(filePath);
+                MessageBox.Show("Протокол збережено у файл: " + filePath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка при збереженні протоколу: " + ex.Message);
+            }
+        }
+
+        //Ранг матриці
         private void button_find_rank_Click(object sender, EventArgs e)
         {
             try
@@ -71,8 +88,6 @@ namespace WinFormsApp1
 
                 // Обчислення рангу
                 int rank = Matrix_rank.CalculateRank(matrix);
-
-                // Виведення у textBox_rank
                 textBox_rank.Text = rank.ToString();
             }
             catch (Exception ex)
@@ -81,6 +96,43 @@ namespace WinFormsApp1
             }
         }
 
+        private void button_protokol_find_rank_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Зчитуємо матрицю з textBox_matrix_A
+                string[] rows = textBox_matri_A.Text.Trim().Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                int rowCount = rows.Length;
+                int colCount = rows[0].Trim().Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
+                double[,] matrix = new double[rowCount, colCount];
+
+                for (int i = 0; i < rowCount; i++)
+                {
+                    string[] values = rows[i].Trim().Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (values.Length != colCount)
+                        throw new Exception("Усі рядки повинні мати однакову кількість чисел!");
+
+                    for (int j = 0; j < colCount; j++)
+                        matrix[i, j] = double.Parse(values[j]);
+                }
+
+                // Обчислення рангу
+                int rank = Matrix_rank.CalculateRank(matrix);
+
+                // Збереження протоколу у файл
+                string path = "C:\\Users\\Arina Gorbach\\Desktop\\rank_matrix_protocol.txt";
+                System.IO.File.WriteAllText(path, Jordan.protocol.ToString());
+
+                MessageBox.Show($"Протокол обчислення збережено у файл:\n{path}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message);
+            }
+            
+        }
+
+        //SLAU
         private void button_calculate_Click(object sender, EventArgs e)
         {
             try
@@ -119,26 +171,70 @@ namespace WinFormsApp1
                     B[i] = double.Parse(bLines[i]);
                 }
 
-                // Розв’язання системи
-                double[,] invA = Jordan.InvertMatrix(A);
-                double[] X = new double[n];
+                // Розв’язок
+                double[] X = LinearSystemSolver.SolveByInverse(A, B);
+                                              
+                textBox_matri_X.Lines = X.Select(x => Math.Round(x).ToString()).ToArray();
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message);
+            }                        
+        }
+
+        private void button_protokol_slau_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Зчитування матриці A
+                string[] lines = textBox_matri_A.Lines;
+                int n = lines.Length;
+                double[,] A = new double[n, n];
+
                 for (int i = 0; i < n; i++)
                 {
-                    X[i] = 0;
+                    string[] row = lines[i].Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (row.Length != n)
+                    {
+                        MessageBox.Show("Матриця A має бути квадратною і заповненою правильно.");
+                        return;
+                    }
+
                     for (int j = 0; j < n; j++)
                     {
-                        X[i] += invA[i, j] * B[j];
+                        A[i, j] = double.Parse(row[j]);
                     }
                 }
 
-                // Виведення розв’язку
-                textBox_matri_X.Lines = X.Select(x => Math.Round(x).ToString()).ToArray();
+                // Зчитування вектора B (вертикально)
+                string[] bLines = textBox_matri_B.Lines;
+                if (bLines.Length != n)
+                {
+                    MessageBox.Show("Кількість елементів вектора B повинна дорівнювати розміру матриці A.");
+                    return;
+                }
+
+                double[] B = new double[n];
+                for (int i = 0; i < n; i++)
+                {
+                    B[i] = double.Parse(bLines[i]);
+                }
+
+                // Розв’язок
+                double[] X = LinearSystemSolver.SolveByInverse(A, B);
+
+                // Збереження у файл
+                string filePath = "C:\\Users\\Arina Gorbach\\Desktop\\slau_protocol.txt";
+                MatrixOperations.SaveProtocolToFile(LinearSystemSolver.protocol.ToString(), filePath);
+                MessageBox.Show("Розв’язок знайдено, протокол збережено у protocol.txt");
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Помилка: " + ex.Message);
             }
         }
+
 
         private void button_generate_Click(object sender, EventArgs e)
         {
@@ -178,27 +274,6 @@ namespace WinFormsApp1
             }
         }
 
-        private void button_protokol_obernen_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // Зчитуємо матрицю з textBox_matri_A
-                double[,] matrixA = GetMatrixFromTextBox(textBox_matri_A);
-
-                // Генерація протоколу пошуку оберненої матриці
-                string protocol = MatrixOperations.GenerateInverseMatrixProtocol(matrixA);
-
-
-                string filePath = "C:\\Users\\Arina Gorbach\\Desktop\\inverse_matrix_protocol.txt";
-                MatrixOperations.SaveProtocolToFile(protocol, filePath);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Сталася помилка: {ex.Message}");
-            }
-
-        }
-
 
         private void checkBox_matrix_A_CheckedChanged(object sender, EventArgs e)
         {
@@ -235,57 +310,6 @@ namespace WinFormsApp1
             }
 
             return matrix;
-        }
-
-        private void button_protokol_find_rank_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // Зчитуємо матрицю з textBox_matri_A
-                double[,] matrixA = GetMatrixFromTextBox(textBox_matri_A);
-
-                // Генерація протоколу пошуку рангу матриці
-                string protocol = MatrixOperations.GenerateRankProtocol(matrixA);
-
-                // Виведення протоколу в файл
-                string filePath = "C:\\Users\\Arina Gorbach\\Desktop\\rank_matrix_protocol.txt";
-                MatrixOperations.SaveProtocolToFile(protocol, filePath);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Сталася помилка: {ex.Message}");
-            }
-
-        }
-
-        private void button_protokol_slau_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // Зчитування матриці A
-                double[,] A = GetMatrixFromTextBox(textBox_matri_A);
-                int n = A.GetLength(0);
-
-                // Зчитування вектора B
-                string[] bLines = textBox_matri_B.Lines;
-
-                double[] B = new double[n];
-                for (int i = 0; i < n; i++)
-                {
-                    B[i] = double.Parse(bLines[i]);
-                }
-
-                // Генерація протоколу
-                string protocol = MatrixOperations.GenerateSlauProtocolUsingInverse(A, B);
-
-                // Збереження у файл
-                string filePath = "C:\\Users\\Arina Gorbach\\Desktop\\slau_protocol.txt";
-                MatrixOperations.SaveProtocolToFile(protocol, filePath);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Сталася помилка: {ex.Message}");
-            }
         }
 
         public class MatrixOperations
